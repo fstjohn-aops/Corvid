@@ -10,10 +10,10 @@ terraform state show "module.base_module.aws_instance.bastion[0]" | grep "id.*="
 
 ```sh
 add-tools-to-path() {
-  export PATH="$HOME/Source/Tools/miscellaneous:$PATH"
+  export PATH="$HOME/Source/Corvid/miscellaneous:$PATH"
 }
 
 remove-tools-from-path() {
-  export PATH=$(echo $PATH | sed -E "s|^$HOME/Source/Tools/miscellaneous:||")
+  export PATH=$(echo $PATH | sed -E "s|^$HOME/Source/Corvid/miscellaneous:||")
 }
 ```
