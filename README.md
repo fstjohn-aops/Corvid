@@ -9,11 +9,11 @@ terraform state show "module.base_module.aws_instance.bastion[0]" | grep "id.*="
 ## .zshrc
 
 ```sh
-add-tools-to-path() {
+corvid-fly() {
   export PATH="$HOME/Source/Corvid/miscellaneous:$PATH"
 }
 
-remove-tools-from-path() {
+corvid-fly() {
   export PATH=$(echo $PATH | sed -E "s|^$HOME/Source/Corvid/miscellaneous:||")
 }
 ```
