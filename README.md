@@ -1,4 +1,4 @@
-# Gists and Stuff
+# Tools and Stuff
 
 ## Random Commands I Wanted To Save
 
