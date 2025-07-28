@@ -16,7 +16,7 @@ KEY_PATH="/Users/finnstjohn/Downloads/id_ed25519_devops"
 BASE_PATH="$HOME/Source/terramate-cloud/stacks/accounts/aops_dev.487718497406"
 STACK_PATH="$BASE_PATH/$FULL_HOSTNAME"
 TEMPLATE_PATH="$BASE_PATH/eg.aopstest.com"
-ANSIBLE_CONFIG_ROOT="/Users/finnstjohn/Source/nginx-apache-consolidation"
+ANSIBLE_CONFIG_ROOT="/Users/finnstjohn/Source/Dev-Environment-Ansible-Cfg"
 
 ################################################################################
 # FUNCTIONS
@@ -185,58 +185,62 @@ add_to_teleport_and_import_db() {
 # MAIN EXECUTION
 ################################################################################
 
-echo "====== ONLY CONFIGURED TO RUN THE TERRAFORM STACK CREATION ======"
+echo "WARNING Only creates instance"
 
 echo "🚀 Creating and applying terraform stack..."
 time { create_and_apply_terraform_stack; }
 echo "✅ Terraform stack created and applied successfully!"
 echo
 
-# if [ "$CI" = "true" ]; then
-#     echo "CI: Continuing automatically..."
-# else
-#     read -p "Press enter to continue to the next step (get_instance_details)..."
-# fi
-# echo
+if [ "$CI" = "true" ]; then
+    echo "CI: Continuing automatically..."
+else
+    read -p "Press enter to continue to the next step (get_instance_details)..."
+fi
+echo
 
-# echo "🔍 Getting instance details..."
-# time { get_instance_details; }
-# echo "✅ Instance details retrieved successfully!"
-# echo
+exit 0
 
-# if [ "$CI" = "true" ]; then
-#     echo "CI: Continuing automatically..."
-# else
-#     read -p "Press enter to continue to the next step (add_to_ansible_inventory)..."
-# fi
-# echo
+################################################################################
 
-# echo "🔍 Adding host to ansible inventory..."
-# time { add_to_ansible_inventory; }
-# echo "✅ Host added to ansible inventory successfully!"
-# echo
+echo "🔍 Getting instance details..."
+time { get_instance_details; }
+echo "✅ Instance details retrieved successfully!"
+echo
 
-# if [ "$CI" = "true" ]; then
-#     echo "CI: Continuing automatically..."
-# else
-#     read -p "Press enter to continue to the next step (run_ansible)..."
-# fi
-# echo
+if [ "$CI" = "true" ]; then
+    echo "CI: Continuing automatically..."
+else
+    read -p "Press enter to continue to the next step (add_to_ansible_inventory)..."
+fi
+echo
 
-# echo "🔍 Running ansible against the new host..."
-# time { run_ansible; }
-# echo "✅ Ansible run completed successfully!"
-# echo
+echo "🔍 Adding host to ansible inventory..."
+time { add_to_ansible_inventory; }
+echo "✅ Host added to ansible inventory successfully!"
+echo
 
-# if [ "$CI" = "true" ]; then
-#     echo "CI: Continuing automatically..."
-# else
-#     read -p "Press enter to continue to the next step (add_to_teleport_and_import_db)..."
-# fi
-# echo
+if [ "$CI" = "true" ]; then
+    echo "CI: Continuing automatically..."
+else
+    read -p "Press enter to continue to the next step (run_ansible)..."
+fi
+echo
 
-# echo "🔍 Adding host to teleport and importing database..."
-# time { add_to_teleport_and_import_db; }
-# echo "✅ Host added to teleport and database imported successfully!"
-# echo
-# echo "🎉 All steps completed successfully!"
+echo "🔍 Running ansible against the new host..."
+time { run_ansible; }
+echo "✅ Ansible run completed successfully!"
+echo
+
+if [ "$CI" = "true" ]; then
+    echo "CI: Continuing automatically..."
+else
+    read -p "Press enter to continue to the next step (add_to_teleport_and_import_db)..."
+fi
+echo
+
+echo "🔍 Adding host to teleport and importing database..."
+time { add_to_teleport_and_import_db; }
+echo "✅ Host added to teleport and database imported successfully!"
+echo
+echo "🎉 All steps completed successfully!"
