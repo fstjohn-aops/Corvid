@@ -5,6 +5,13 @@ set -euo pipefail
 # Default CI to false if not set
 CI=${CI:-false}
 
+# Vault password file configuration
+VAULT_PASSWORD_FILE="${VAULT_PASSWORD_FILE:-$HOME/.aops_ansible_vault_pw}"
+if [ ! -f "$VAULT_PASSWORD_FILE" ]; then
+    echo "ERROR: Vault password file not found at $VAULT_PASSWORD_FILE. Set VAULT_PASSWORD_FILE or create the file."
+    exit 1
+fi
+
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <PREFIX>"
     exit 1
@@ -12,30 +19,56 @@ fi
 
 PREFIX="$1"
 FULL_HOSTNAME="$PREFIX.aopstest.com"
-KEY_PATH="/Users/finnstjohn/Downloads/id_ed25519_devops"
-BASE_PATH="$HOME/Source/terramate-cloud/stacks/accounts/aops_dev.487718497406"
+
+# Configuration. Override with environment variables.
+TERRAMATE_CLOUD_PATH=${TERRAMATE_CLOUD_PATH:-}
+ANSIBLE_CONFIG_ROOT=${ANSIBLE_CONFIG_ROOT:-}
+TERRAMATE_CLOUD_REPO="git@github.com:aops-ba/terramate-cloud.git"
+ANSIBLE_CONFIG_REPO="git@github.com:aops-ba/ansible-cfg.git"
+
+# Trap for cleanup
+trap "echo 'Cleaning up...'; rm -rf '$TERRAMATE_CLOUD_PATH' '$ANSIBLE_CONFIG_ROOT'" EXIT
+
+if [ -z "$TERRAMATE_CLOUD_PATH" ]; then
+    TERRAMATE_CLOUD_PATH=$(mktemp -d)
+    echo "Cloning Terramate repo to $TERRAMATE_CLOUD_PATH"
+    git clone "$TERRAMATE_CLOUD_REPO" "$TERRAMATE_CLOUD_PATH"
+fi
+
+if [ -z "$ANSIBLE_CONFIG_ROOT" ]; then
+    ANSIBLE_CONFIG_ROOT=$(mktemp -d)
+    echo "Cloning Ansible repo to $ANSIBLE_CONFIG_ROOT"
+    git clone "$ANSIBLE_CONFIG_REPO" "$ANSIBLE_CONFIG_ROOT"
+fi
+
+# Derived variables
+BASE_PATH="$TERRAMATE_CLOUD_PATH/stacks/accounts/aops_dev.487718497406"
 STACK_PATH="$BASE_PATH/$FULL_HOSTNAME"
-TEMPLATE_PATH="$BASE_PATH/eg.aopstest.com"
-ANSIBLE_CONFIG_ROOT="/Users/finnstjohn/Source/Dev-Environment-Ansible-Cfg"
 
 ################################################################################
 # FUNCTIONS
 ################################################################################
 
+check_dependencies() {
+    local dependencies=("git" "terraform")
+    for cmd in "${dependencies[@]}"; do
+        if ! command -v "$cmd" &> /dev/null; then
+            echo "$cmd could not be found, please install it."
+            exit 1
+        fi
+    done
+}
+
 create_and_apply_terraform_stack() {
 
-    pushd "$HOME/Source/terramate-cloud/"
+    pushd "$TERRAMATE_CLOUD_PATH"
+    git checkout main
+    git pull
 
     # check if stack doesn't exist
     if [ ! -d "$STACK_PATH" ]; then
         echo "Stack doesn't exist! creating..."
         echo "Creating terraform stack..."
-
-        # update repo
-        # git pull
-
-        # TODO: make it create a new branch and checkout that branch
-        # git checkout create-host-$FULL_HOSTNAME
 
         # create new terraform stack
         terramate create stacks/accounts/aops_dev.487718497406/$FULL_HOSTNAME
@@ -72,6 +105,7 @@ EOF
             git add .
             git commit -m "Create new test instance $FULL_HOSTNAME"
             echo "committing on branch: $(git branch --show-current)"
+            git push origin main
         else
             echo "No changes to commit"
         fi
@@ -83,15 +117,21 @@ EOF
     pushd "$STACK_PATH"
 
     # set cloudflare credentials
-    source ~/tokens
+    if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+        echo "ERROR: CLOUDFLARE_API_TOKEN is not set in the environment."
+        exit 1
+    fi
 
     terraform init
+
+    if [ "$CI" = "false" ]; then
     # apply uninteractively
     echo "Applying terraform stack..."
     if [ "$CI" = "true" ]; then
         terraform apply -auto-approve
     else
         terraform apply
+        fi
     fi
 
     popd
@@ -100,7 +140,7 @@ EOF
 get_instance_details() {
     echo "Getting instance ID and IP address..."
     # TODO: implement getting instance ID and IP address
-    pushd ~/Source/terramate-cloud/stacks/accounts/aops_dev.487718497406/$FULL_HOSTNAME
+    pushd "$STACK_PATH"
     INSTANCE_ID=$(terraform output -raw instance_id)
     INSTANCE_IP=$(terraform output -raw instance_public_ip)
 
@@ -114,7 +154,12 @@ get_instance_details() {
 add_to_ansible_inventory() {
     echo "Adding host to ansible-cfg inventory..."
 
-    # add host in three places to file: 
+    pushd "$ANSIBLE_CONFIG_ROOT"
+    git checkout main
+    git pull
+    popd
+
+    # add host in three places to file:
     INVENTORY_FILE="$ANSIBLE_CONFIG_ROOT/inventories/inventory_aops_web_setup_test.yml"
     
     # Add hostname to the top of aops_web_setup_test hosts section
@@ -165,6 +210,15 @@ add_to_ansible_inventory() {
     if [ -f "$HOST_VARS_DIR/programmatically_created_vars.yml" ]; then
         rm "$HOST_VARS_DIR/programmatically_created_vars.yml"
     fi
+
+    # commit and push
+    pushd "$ANSIBLE_CONFIG_ROOT"
+    if [ -n "$(git status --porcelain)" ]; then
+        git add .
+        git commit -m "Add host $FULL_HOSTNAME to inventory"
+        git push origin main
+    fi
+    popd
 }
 
 run_ansible() {
@@ -172,20 +226,20 @@ run_ansible() {
     pushd "$ANSIBLE_CONFIG_ROOT"
     ansible-playbook aops_web_setup.yml -vv \
       --limit $FULL_HOSTNAME \
-      --vault-password-file .aops_ansible_vault_pw
+      --vault-password-file "$VAULT_PASSWORD_FILE"
     popd
 }
 
-add_to_teleport_and_import_db() {
+import_db() {
     echo "Adding host to teleport and importing database..."
-    ssh-import-db.sh "$KEY_PATH" "$FULL_HOSTNAME"
+    ssh-import-db.sh "$FULL_HOSTNAME"
 }
 
 ################################################################################
 # MAIN EXECUTION
 ################################################################################
 
-echo "WARNING Only creates instance"
+check_dependencies
 
 echo "🚀 Creating and applying terraform stack..."
 time { create_and_apply_terraform_stack; }
@@ -198,10 +252,6 @@ else
     read -p "Press enter to continue to the next step (get_instance_details)..."
 fi
 echo
-
-exit 0
-
-################################################################################
 
 echo "🔍 Getting instance details..."
 time { get_instance_details; }
@@ -235,12 +285,16 @@ echo
 if [ "$CI" = "true" ]; then
     echo "CI: Continuing automatically..."
 else
-    read -p "Press enter to continue to the next step (add_to_teleport_and_import_db)..."
+    read -p "Press enter to continue to the next step (import_db)..."
 fi
 echo
 
 echo "🔍 Adding host to teleport and importing database..."
-time { add_to_teleport_and_import_db; }
+time { import_db; }
 echo "✅ Host added to teleport and database imported successfully!"
 echo
 echo "🎉 All steps completed successfully!"
+
+play -q -n synth 0.1 sin 880
+play -q -n synth 0.1 sin 990
+play -q -n synth 0.1 sin 1100
