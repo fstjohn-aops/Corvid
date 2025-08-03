@@ -1,0 +1,109 @@
+account_role,instance_id,region,public_ip,private_ip,state,name,key_name
+Academy-Dev.AWSAdministratorAccess,i-09d7a711159e1f1b6,us-west-1,52.8.55.20,172.31.12.127,running,strapi.aopstest.com,AoPS Test Server Private Key
+Academy-Dev.AWSAdministratorAccess,i-0072573413cbe6d50,us-west-1,13.57.36.235,172.31.11.24,running,academy2-2.aopstest.com,AoPS Test Server Private Key
+Academy-Dev.AWSAdministratorAccess,i-0638bdfc2c09bc0da,us-west-1,54.67.19.29,172.31.9.47,running,academy2.aopstest.com,aopstest
+AoPS-Dev.AWSAdministratorAccess,i-0d91b5f7b05934a5a,us-west-2,34.213.224.171,10.0.9.118,running,ar.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0a5793ce1f90780bf,us-west-2,52.26.66.235,10.0.6.113,running,yl.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-03c39aa71e9778e04,us-west-2,54.185.165.165,10.0.5.119,running,sb.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0ba5549253111026e,us-west-2,34.220.43.164,10.0.4.100,running,pm.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0cc2790bee7a99cb7,us-west-2,34.215.72.207,10.0.9.44,running,le.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-05b73acf6fd6440d3,us-west-2,35.91.135.208,10.0.12.249,running,js.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-048b4e416369f5709,us-west-2,34.214.82.193,10.0.4.55,running,rk.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-04769a4157f814630,us-west-2,34.211.238.82,10.0.3.11,running,bt.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0cac68ff465b78da5,us-west-2,54.218.96.158,10.0.9.60,running,lz.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0bf7e2f5d49133737,us-west-2,54.185.146.12,10.0.14.104,running,kz.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-00f48460040b94780,us-west-2,34.220.78.225,10.0.7.114,running,tm.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0648980d3ee00b507,us-west-2,35.86.168.242,10.0.5.42,running,px.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-04a7507fd9a55376b,us-west-2,34.213.162.207,10.0.1.180,running,ds.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-056f7e4fbf450cf9c,us-west-2,35.88.65.41,10.0.13.243,running,arog.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0f2277a000ba672b9,us-west-2,35.89.165.167,10.0.5.204,running,dj.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-03642f28b16a309d0,us-west-2,44.243.9.120,10.0.14.59,running,ag.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-050bb15131cd75ce2,us-west-2,35.155.236.52,10.0.8.8,running,ks.aopstest.com-server,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-00d607adb6fa5bec1,us-west-2,34.220.246.100,10.0.13.139,running,banda1.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-045acda2c5a748dcb,us-west-2,35.166.224.98,10.0.4.250,running,ocelot3.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-09b94531e225d5a4b,us-west-2,54.190.28.40,10.0.13.40,running,ocelot6.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0d16853c30353f19f,us-west-2,34.221.127.96,10.0.5.130,running,acadops.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-07fce044fc6637006,us-west-2,35.162.75.193,10.0.10.206,running,platypus1.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-064775c6c760cd342,us-west-2,52.26.169.171,10.0.2.15,running,alpaca2.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-09539087280934624,us-west-2,54.212.69.152,10.0.13.174,running,pool3.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-02f48f4bbc9f74f18,us-west-2,34.219.220.45,10.0.1.158,running,alpaca1.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0ba167286357d77c0,us-west-2,35.86.129.141,10.0.11.167,running,ocelot4.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-064038c8e28284cbc,us-west-2,52.13.50.246,10.0.3.97,running,contests.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0abdf779e3b04aaeb,us-west-2,34.213.90.70,10.0.14.177,running,kb.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0cedc5a4c6c7e6d4f,us-west-2,35.90.42.98,10.0.10.107,running,md.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-03dd255c54baf1a77,us-west-2,35.92.243.179,10.0.7.126,running,rl.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0cf4f2c7d3e258e7f,us-west-2,44.247.75.105,10.0.9.46,running,jwc.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-063cda55344df9c3f,us-west-2,35.92.241.87,10.0.1.122,running,pr.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0f472dd8c40e73a11,us-west-2,N/A,10.0.12.43,stopped,hr.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0073d48dedd999c93,us-west-2,52.33.90.222,10.0.11.232,running,bm.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-013e2c0a4ef967a63,us-west-2,34.210.196.187,10.0.2.232,running,gd.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0d48b5ab64fc45c3a,us-west-2,35.89.103.70,10.0.5.196,running,jb.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0b9d2eba886a2ad16,us-west-2,34.220.234.151,10.0.6.155,running,vn.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0421c278883b4aee9,us-west-2,34.220.190.177,10.0.8.60,running,sk.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0cf4759f1b93b697e,us-west-2,52.12.193.178,10.0.3.171,running,lp.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0a952dd4ef4376fa6,us-west-2,35.91.158.125,10.0.11.122,running,jc.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0d7c0bbf0989fa1cf,us-west-2,54.184.229.246,10.0.13.250,running,ju.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-067b575023d05e5e3,us-west-2,35.91.50.76,10.0.14.102,running,platypus3.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-03a2fa73a66c29fa3,us-west-2,N/A,10.0.11.237,stopped,sre1.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-03df625be185ee4a9,us-west-2,52.36.239.77,10.0.12.134,running,daily.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0cdf2361c1571cd56,us-west-2,54.191.190.180,10.0.6.248,running,alpaca3.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0b327d37f5a297e78,us-west-2,52.40.143.192,10.0.6.141,running,platypus2.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0025fd093d6f138e6,us-west-2,18.236.246.173,10.0.5.185,running,tosops.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0cc2837152f5ec9e0,us-west-2,35.90.94.72,10.0.14.130,running,pool1.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-04a4b321efdc9a03f,us-west-2,35.92.250.4,10.0.15.200,running,pool2.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-065a37d03900d2bca,us-west-2,34.213.224.235,10.0.3.143,running,ocelot5.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-02262f266f9291ac7,us-west-2,34.212.166.107,10.0.5.253,running,apr.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-05738351f06133039,us-west-2,34.218.64.116,10.0.1.181,running,ocelot2.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-038088cfc42d70a95,us-west-2,52.43.2.159,10.0.0.56,running,ocelot1.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-034285a3de58d92a7,us-west-2,52.26.33.207,10.0.9.117,running,sf.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0e74f9ff59eda78bc,us-west-2,54.245.200.252,10.0.13.106,running,staging.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-061a74e69c812ba98,us-west-2,35.95.111.158,10.0.10.194,running,jz.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0ac6aff0a0e8dcea4,us-west-2,35.89.112.4,10.0.6.98,running,im.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-016954fc74ce63265,us-west-2,35.88.103.179,10.0.6.80,running,db.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0fb6c83ca5d416bda,us-west-2,52.89.154.158,10.0.3.67,running,mgs.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-02239c178baa4c089,us-west-2,54.187.88.37,10.0.4.163,running,mb.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0a0f0ee4674f67f88,us-west-2,54.201.101.26,10.0.10.73,running,shiny.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0c6536f5a9c24b020,us-west-2,54.244.12.191,10.0.2.222,running,af.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0b060ce03d470e86a,us-west-2,35.92.67.32,10.0.12.224,running,qa.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-058cbab8e5cd27fee,us-west-2,34.217.44.197,10.0.6.26,running,salesforce.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-047086f8747d5d4a1,us-west-2,54.245.57.200,10.0.15.172,running,jab.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0f9539b41ff3acb32,us-west-2,35.161.81.250,10.0.4.134,running,jm.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0a29549ea62aeae08,us-west-2,54.218.56.84,10.0.6.9,running,devops1.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0b1a3bd9c7bfa5883,us-west-2,35.92.220.47,10.0.9.156,running,aw.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0b4c18482463192f1,us-west-2,35.91.253.160,10.0.9.76,running,ipldev.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0da3056ee62694155,us-west-2,35.92.236.224,10.0.15.175,running,staging-ci.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-05cb8c4d1ae143534,us-west-2,44.245.98.204,10.0.12.59,running,np.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-03a28e3862e6c3551,us-west-2,34.219.186.162,10.0.2.199,running,as.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-028963c589b534394,us-west-2,34.221.159.228,10.0.13.74,running,plugin-editor.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-011d9ebc5e3881b40,us-west-2,N/A,10.0.5.231,stopped,mp.aopstest.com-server,id_ed25519_devops.pub
+AoPS-Dev.AWSAdministratorAccess,i-0dbba4415bcb942aa,us-west-2,44.251.109.19,10.0.2.202,running,rg.aopstest.com,id_ed25519_devops.pub
+AoPS-Dev.AWSAdministratorAccess,i-0835d4919360772d0,us-west-2,34.216.118.25,10.0.10.76,running,curriculum-systems-1.aopstest.com,id_ed25519_devops.pub
+AoPS-Dev.AWSAdministratorAccess,i-06cca4088cd9f9a4a,us-west-2,35.89.158.121,10.0.5.162,running,curriculum-systems-2.aopstest.com,id_ed25519_devops.pub
+AoPS-Dev.AWSAdministratorAccess,i-00bbb4ff8d2dd562a,us-west-2,54.70.2.145,10.0.14.87,running,operations-hub-1.aopstest.com,id_ed25519_devops.pub
+AoPS-Dev.AWSAdministratorAccess,i-0044ff586bcbd2b0d,us-west-2,34.220.136.118,10.0.1.173,running,school-partnerships.aopstest.com,id_ed25519_devops.pub
+AoPS-Dev.AWSAdministratorAccess,i-096baf4092b72473b,us-west-2,34.210.86.244,10.0.5.217,running,operations-hub-2.aopstest.com,id_ed25519_devops.pub
+AoPS-Dev.AWSAdministratorAccess,i-06280be3aa318145c,us-west-2,44.247.81.148,10.0.3.140,running,th.aopstest.com,id_ed25519_devops.pub
+AoPS-Dev.AWSAdministratorAccess,i-0ed973677f0898d67,us-west-2,44.243.24.243,10.0.0.246,running,jp.aopstest.com,id_ed25519_devops.pub
+AoPS-Dev.AWSAdministratorAccess,i-03160568d9035475f,us-west-2,35.165.178.176,10.0.12.183,running,eg.aopstest.com,id_ed25519_devops.pub
+AoPS-Dev.AWSAdministratorAccess,i-04beefe659cfb3d1b,us-west-2,35.95.138.192,10.0.7.15,running,ha.aopstest.com,id_ed25519_devops.pub
+AoPS-Dev.AWSAdministratorAccess,i-0b6cdf44d5a80d01a,us-west-2,34.213.120.236,10.0.2.78,running,ow.aopstest.com,id_ed25519_devops.pub
+BAClassroom-Dev.AWSAdministratorAccess,i-0a648722ec4b142bb,us-west-1,54.176.48.35,172.31.1.174,running,baclassroom.aopstest.com,BADeveloper
+BAClassroom-Dev.AWSAdministratorAccess,i-082783e49f71d9a15,us-west-1,13.52.91.202,172.31.5.250,running,baclassroom2.aopstest.com,BADeveloper
+BAClassroom-Dev.AWSAdministratorAccess,i-041bd4f0128f2bbf5,us-west-1,54.183.248.170,172.31.10.54,running,baclassroom3.aopstest.com,BADeveloper
+BAClassroom-Dev.AWSAdministratorAccess,i-0fe2f02437d5ddca0,us-west-1,54.183.204.26,172.31.7.33,running,baclassroom4.aopstest.com,BADeveloper
+BACurriculum-Dev.AWSAdministratorAccess,i-0e1c7988b977b405e,us-west-1,52.9.160.170,172.31.10.236,running,bacurriculum.aopstest.com,BADeveloper
+BACurriculum-Dev.AWSAdministratorAccess,i-08d0e787f6e0ac74d,us-west-1,54.241.231.95,172.31.10.180,running,bacurriculum2.aopstest.com,BADeveloper
+BACurriculum-Dev.AWSAdministratorAccess,i-05c29309debff1281,us-west-1,3.101.146.211,172.31.7.140,running,bacurriculum3.aopstest.com,BADeveloper
+BACurriculum-Dev.AWSAdministratorAccess,i-05523a9d7547aab63,us-west-1,18.144.27.202,172.31.13.144,running,bacurriculum4.aopstest.com,BADeveloper
+CS-Dev.AWSAdministratorAccess,i-0848a287a88d04a2d,us-west-1,54.176.115.15,172.31.4.75,running,cs1.aopstest.com,AoPS Test Server Private Key
+CS-Dev.AWSAdministratorAccess,i-00b15df224f3f895d,us-west-1,54.67.112.127,172.31.4.156,running,cs2.aopstest.com,AoPS Test Server Private Key
+CS-Dev.AWSAdministratorAccess,i-0aa558d052c5be5a9,us-west-1,184.72.11.8,172.31.15.165,running,cs3.aopstest.com,AoPS Test Server Private Key
+CryptGrid-Dev.AWSAdministratorAccess,i-0b673a29e62d03ef1,us-west-1,13.57.204.32,172.31.2.233,running,grypt.aopstest.com,AoPS Test Server Private Key
+CryptGrid-Dev.AWSAdministratorAccess,i-0862619bd911f235d,us-west-1,54.183.67.59,172.31.12.31,running,cryptid.aopstest.com,AoPS Test Server Private Key
+CryptGrid-Dev.AWSAdministratorAccess,i-0821103e71df4c193,us-west-2,35.91.43.192,10.0.21.47,running,bigfoot.aopstest.com,AoPS Test Server Private Key
+CryptGrid-Dev.AWSAdministratorAccess,i-00753f8f847bbe132,us-west-2,34.220.25.156,10.0.29.252,running,mothman.aopstest.com,AoPS Test Server Private Key
+Grader-Staging.AWSAdministratorAccess,i-0e4a03ccb8e9722a7,us-west-1,54.151.74.139,172.31.25.231,running,gradertest.aopstest.com,AoPS Test Server Private Key
+PartnerApi-Dev.AWSAdministratorAccess,i-0e36ecc74c0fbb0ab,us-west-2,44.245.27.251,10.11.20.142,running,ext-api.aopstest.com,BADeveloper
+Torchboard-Dev.AWSAdministratorAccess,i-09467d218a57a4109,us-west-2,44.227.188.173,10.9.21.52,running,torchboard1.aopstest.com,AoPS Test Server Private Key
+Torchboard-Dev.AWSAdministratorAccess,i-08f004d9dafa26ca5,us-west-2,100.21.181.65,10.9.25.183,running,torchboard3.aopstest.com,AoPS Test Server Private Key
+Torchboard-Dev.AWSAdministratorAccess,i-0411a0ab97763d8df,us-west-2,54.187.63.249,10.9.26.255,running,torchboard2.aopstest.com,AoPS Test Server Private Key

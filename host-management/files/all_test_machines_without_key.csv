@@ -1,0 +1,25 @@
+account_role,instance_id,region,public_ip,private_ip,state,name,key_name
+AoPS-Dev.AWSAdministratorAccess,i-0648980d3ee00b507,us-west-2,35.86.168.242,10.0.5.42,running,px.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-056f7e4fbf450cf9c,us-west-2,35.88.65.41,10.0.13.243,running,arog.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-03642f28b16a309d0,us-west-2,44.243.9.120,10.0.14.59,running,ag.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-064775c6c760cd342,us-west-2,52.26.169.171,10.0.2.15,running,alpaca2.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-064038c8e28284cbc,us-west-2,52.13.50.246,10.0.3.97,running,contests.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0abdf779e3b04aaeb,us-west-2,34.213.90.70,10.0.14.177,running,kb.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0cf4f2c7d3e258e7f,us-west-2,44.247.75.105,10.0.9.46,running,jwc.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-063cda55344df9c3f,us-west-2,35.92.241.87,10.0.1.122,running,pr.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0f472dd8c40e73a11,us-west-2,N/A,10.0.12.43,stopped,hr.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-03a2fa73a66c29fa3,us-west-2,N/A,10.0.11.237,stopped,sre1.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0cdf2361c1571cd56,us-west-2,54.191.190.180,10.0.6.248,running,alpaca3.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-0fb6c83ca5d416bda,us-west-2,52.89.154.158,10.0.3.67,running,mgs.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-058cbab8e5cd27fee,us-west-2,34.217.44.197,10.0.6.26,running,salesforce.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-03a28e3862e6c3551,us-west-2,34.219.186.162,10.0.2.199,running,as.aopstest.com,ansible-initial-run
+AoPS-Dev.AWSAdministratorAccess,i-011d9ebc5e3881b40,us-west-2,N/A,10.0.5.231,stopped,mp.aopstest.com-server,id_ed25519_devops.pub
+AoPS-Dev.AWSAdministratorAccess,i-0dbba4415bcb942aa,us-west-2,44.251.109.19,10.0.2.202,running,rg.aopstest.com,id_ed25519_devops.pub
+AoPS-Dev.AWSAdministratorAccess,i-0ed973677f0898d67,us-west-2,44.243.24.243,10.0.0.246,running,jp.aopstest.com,id_ed25519_devops.pub
+CS-Dev.AWSAdministratorAccess,i-0848a287a88d04a2d,us-west-1,54.176.115.15,172.31.4.75,running,cs1.aopstest.com,AoPS Test Server Private Key
+CS-Dev.AWSAdministratorAccess,i-00b15df224f3f895d,us-west-1,54.67.112.127,172.31.4.156,running,cs2.aopstest.com,AoPS Test Server Private Key
+CS-Dev.AWSAdministratorAccess,i-0aa558d052c5be5a9,us-west-1,184.72.11.8,172.31.15.165,running,cs3.aopstest.com,AoPS Test Server Private Key
+PartnerApi-Dev.AWSAdministratorAccess,i-0e36ecc74c0fbb0ab,us-west-2,44.245.27.251,10.11.20.142,running,ext-api.aopstest.com,BADeveloper
+Torchboard-Dev.AWSAdministratorAccess,i-09467d218a57a4109,us-west-2,44.227.188.173,10.9.21.52,running,torchboard1.aopstest.com,AoPS Test Server Private Key
+Torchboard-Dev.AWSAdministratorAccess,i-08f004d9dafa26ca5,us-west-2,100.21.181.65,10.9.25.183,running,torchboard3.aopstest.com,AoPS Test Server Private Key
+Torchboard-Dev.AWSAdministratorAccess,i-0411a0ab97763d8df,us-west-2,54.187.63.249,10.9.26.255,running,torchboard2.aopstest.com,AoPS Test Server Private Key

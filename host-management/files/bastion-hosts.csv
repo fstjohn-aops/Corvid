@@ -1,0 +1,3 @@
+account_role,instance_id,region,public_ip,private_ip,state,name
+Platform-Prod.AWSAdministratorAccess,i-0a72130b54a7df72f,us-east-1,54.234.93.205,10.0.132.162,running,AoPS_Bastion_Host
+Platform-Prod.AWSAdministratorAccess,i-048a266a9ba7130c6,us-east-1,18.211.178.28,10.0.134.228,running,AoPS_Bastion_Dwh
