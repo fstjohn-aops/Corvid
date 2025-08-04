@@ -246,6 +246,9 @@ time { create_and_apply_terraform_stack; }
 echo "✅ Terraform stack created and applied successfully!"
 echo
 
+echo "Stopping after terraform stack creation..."
+exit 0
+
 if [ "$CI" = "true" ]; then
     echo "CI: Continuing automatically..."
 else
