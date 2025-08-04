@@ -10,6 +10,11 @@ fi
 PREFIX="$1"
 FULL_HOSTNAME="$PREFIX.aopstest.com"
 
+if ! [[ "$PREFIX" =~ ^[a-zA-Z0-9]+$ ]]; then
+    echo "ERROR: PREFIX must be alphanumeric (letters and numbers only)."
+    exit 1
+fi
+
 # Configuration. Override with environment variables.
 TERRAMATE_CLOUD_PATH=${TERRAMATE_CLOUD_PATH:-}
 ANSIBLE_CONFIG_ROOT=${ANSIBLE_CONFIG_ROOT:-}
