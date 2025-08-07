@@ -188,13 +188,13 @@ run_ansible() {
         --private-key "$BOOTSTRAP_SSH_KEY" \
         --limit "$FULL_HOSTNAME" \
         --vault-password-file "$VAULT_PASSWORD_FILE" \
-        --ssh-common-args="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
+        --ssh-common-args="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
     echo "Running web_setup.yml with ansiblecontrol key..."
     ansible-playbook web_setup.yml \
         --private-key "$ANSIBLECONTROL_SSH_KEY" \
         --limit "$FULL_HOSTNAME" \
         --vault-password-file "$VAULT_PASSWORD_FILE" \
-        --ssh-common-args="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
+        --ssh-common-args="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
     popd
 }
 
