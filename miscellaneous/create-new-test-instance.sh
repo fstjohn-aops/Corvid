@@ -3,13 +3,6 @@
 set -euo pipefail
 
 # =============================
-# COLOR CODES
-# =============================
-
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# =============================
 # CONFIGURATION (env vars/constants)
 # =============================
 
@@ -20,24 +13,24 @@ fi
 
 PREFIX="$1"
 FULL_HOSTNAME="$PREFIX.aopstest.com"
+
 ANSIBLE_CFG_BRANCH="simple"
 VAULT_PASSWORD_FILE="${VAULT_PASSWORD_FILE:-$HOME/.aops_ansible_vault_pw}"
 TERRAMATE_CLOUD_PATH="${TERRAMATE_CLOUD_PATH:-}"
 ANSIBLE_CONFIG_ROOT="${ANSIBLE_CONFIG_ROOT:-}"
 TERRAMATE_CLOUD_REPO="git@github.com:aops-ba/terramate-cloud.git"
 ANSIBLE_CONFIG_REPO="git@github.com:aops-ba/ansible-cfg.git"
-BOOTSTRAP_SSH_KEY="${BOOTSTRAP_SSH_KEY:-$HOME/.ssh/id_rsa}"
-ANSIBLECONTROL_SSH_KEY="${ANSIBLECONTROL_SSH_KEY:-$HOME/.ssh/id_ansiblecontrol}"
-CI="${CI:-false}"
+BOOTSTRAP_SSH_KEY="${BOOTSTRAP_SSH_KEY:-$HOME/.ssh/bootstrap_key}"
+ANSIBLECONTROL_SSH_KEY="${ANSIBLECONTROL_SSH_KEY:-$HOME/.ssh/ansible_control_key}"
 TERRAFORM_TEMPLATE_FILE="$(dirname "$0")/test_instance.tf.template"
 EMAIL="${EMAIL:-devops@artofproblemsolving.com}"
-DEBUG="${DEBUG:-false}"
 
 # =============================
 # FUNCTION DEFINITIONS
 # =============================
 
 validate_and_check_environment() {
+
     # Check required commands
     local dependencies=("git" "terraform" "aws" "ssh-import-db.sh" "yq")
     for cmd in "${dependencies[@]}"; do
@@ -53,60 +46,27 @@ validate_and_check_environment() {
         exit 1
     fi
 
-    # Expand ~ to $HOME in SSH keys
-    if [[ "$BOOTSTRAP_SSH_KEY" == ~* ]]; then
-        BOOTSTRAP_SSH_KEY="$HOME${BOOTSTRAP_SSH_KEY:1}"
-    fi
-    if [[ "$ANSIBLECONTROL_SSH_KEY" == ~* ]]; then
-        ANSIBLECONTROL_SSH_KEY="$HOME${ANSIBLECONTROL_SSH_KEY:1}"
-    fi
-    
-    # Ensure SSH keys are absolute paths
-    if [ "${BOOTSTRAP_SSH_KEY:0:1}" != "/" ]; then
-        BOOTSTRAP_SSH_KEY="$HOME/$BOOTSTRAP_SSH_KEY"
-    fi
-    if [ "${ANSIBLECONTROL_SSH_KEY:0:1}" != "/" ]; then
-        ANSIBLECONTROL_SSH_KEY="$HOME/$ANSIBLECONTROL_SSH_KEY"
-    fi
+    # Expand and resolve SSH keys and vault password file to absolute paths
+    BOOTSTRAP_SSH_KEY=$(realpath "$BOOTSTRAP_SSH_KEY")
+    ANSIBLECONTROL_SSH_KEY=$(realpath "$ANSIBLECONTROL_SSH_KEY")
+    VAULT_PASSWORD_FILE=$(realpath "$VAULT_PASSWORD_FILE")
 
-    # Expand ~ to $HOME in VAULT_PASSWORD_FILE
-    if [[ "$VAULT_PASSWORD_FILE" == ~* ]]; then
-        VAULT_PASSWORD_FILE="$HOME${VAULT_PASSWORD_FILE:1}"
-    fi
-    # Ensure VAULT_PASSWORD_FILE is absolute
-    if [ "${VAULT_PASSWORD_FILE:0:1}" != "/" ]; then
-        VAULT_PASSWORD_FILE="$HOME/$VAULT_PASSWORD_FILE"
-    fi
+    # Check required files exist
+    for file_var in VAULT_PASSWORD_FILE BOOTSTRAP_SSH_KEY ANSIBLECONTROL_SSH_KEY TERRAFORM_TEMPLATE_FILE; do
+        file_path="${!file_var}"
+        if [ ! -f "$file_path" ]; then
+            echo "ERROR: $file_var not found at $file_path"
+            exit 1
+        fi
+    done
 
-    # Check vault password file
-    if [ ! -f "$VAULT_PASSWORD_FILE" ]; then
-        echo "ERROR: Vault password file not found at $VAULT_PASSWORD_FILE. Set VAULT_PASSWORD_FILE or create the file."
-        exit 1
-    fi
-
-    # Check SSH keys exist
-    if [ ! -f "$BOOTSTRAP_SSH_KEY" ]; then
-        echo "ERROR: Bootstrap SSH key not found at $BOOTSTRAP_SSH_KEY"
-        exit 1
-    fi
-    if [ ! -f "$ANSIBLECONTROL_SSH_KEY" ]; then
-        echo "ERROR: Ansible control SSH key not found at $ANSIBLECONTROL_SSH_KEY"
-        exit 1
-    fi
-
-    # Check Terraform template file
-    if [ ! -f "$TERRAFORM_TEMPLATE_FILE" ]; then
-        echo "ERROR: Terraform template file not found at $TERRAFORM_TEMPLATE_FILE."
-        exit 1
-    fi
-
-    # Check CLOUDFLARE_API_TOKEN
+    # Check CLOUDFLARE_API_TOKEN directly
     if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
         echo "ERROR: CLOUDFLARE_API_TOKEN is not set in the environment."
         exit 1
     fi
 
-    # Check AWS authentication (env vars or profile)
+    # Check AWS credentials
     if [[ -z "${AWS_ACCESS_KEY_ID:-}" && -z "${AWS_PROFILE:-}" ]]; then
         echo "ERROR: No AWS credentials found. Set AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY or AWS_PROFILE in the environment."
         exit 1
@@ -139,6 +99,8 @@ create_and_apply_terraform_stack() {
     if [ ! -d "$STACK_PATH" ]; then
         echo "Stack doesn't exist! creating..."
         echo "Creating terraform stack..."
+        echo "TERRAMATE_CLOUD_PATH: $TERRAMATE_CLOUD_PATH"
+        read -p "Press enter to continue..."
         terramate create stacks/accounts/aops_dev.487718497406/$FULL_HOSTNAME
         cp "$TERRAFORM_TEMPLATE_FILE" "$STACK_PATH/main.tf"
         sed -i '' "s/TERRAFORM_STACK_PREFIX_PLACEHOLDER/$PREFIX/g" "$STACK_PATH/main.tf"
@@ -155,13 +117,10 @@ create_and_apply_terraform_stack() {
     fi
     pushd "$STACK_PATH"
     terraform init
-    if [ "$CI" = "false" ]; then
+    # Only apply terraform stack if CI is not defined
+    if [ -z "${CI+x}" ]; then
         echo "Applying terraform stack..."
-        if [ "$CI" = "true" ]; then
-            terraform apply -auto-approve
-        else
-            terraform apply
-        fi
+        terraform apply
     fi
     popd
     popd
@@ -225,9 +184,17 @@ run_ansible() {
     echo "Running ansible against the new host..."
     pushd "$ANSIBLE_CONFIG_ROOT"
     echo "Running initial_setup.yml with bootstrap key..."
-    ansible-playbook initial_setup.yml --private-key "$BOOTSTRAP_SSH_KEY" --limit "$FULL_HOSTNAME" --vault-password-file "$VAULT_PASSWORD_FILE" --ssh-common-args="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+    ansible-playbook initial_setup.yml \
+        --private-key "$BOOTSTRAP_SSH_KEY" \
+        --limit "$FULL_HOSTNAME" \
+        --vault-password-file "$VAULT_PASSWORD_FILE" \
+        --ssh-common-args="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
     echo "Running web_setup.yml with ansiblecontrol key..."
-    ansible-playbook web_setup.yml --private-key "$ANSIBLECONTROL_SSH_KEY" --limit "$FULL_HOSTNAME" --vault-password-file "$VAULT_PASSWORD_FILE" --ssh-common-args="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+    ansible-playbook web_setup.yml \
+        --private-key "$ANSIBLECONTROL_SSH_KEY" \
+        --limit "$FULL_HOSTNAME" \
+        --vault-password-file "$VAULT_PASSWORD_FILE" \
+        --ssh-common-args="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
     popd
 }
 
@@ -237,7 +204,7 @@ import_db() {
 }
 
 prompt_to_continue() {
-    if [ "$CI" = "true" ]; then
+    if [ -n "${CI+x}" ]; then
         echo "CI: Continuing automatically..."
     else
         read -p "Press enter to continue..."
@@ -251,27 +218,27 @@ prompt_to_continue() {
 
 validate_and_check_environment
 
-echo -e "${BLUE}========== [1/5] Cloning code and setting up... ==========${NC}"
+echo "========== [1/5] Cloning code and setting up... =========="
 time { clone_code_and_setup; }
 echo "Completed: Cloning code and setup!"
 prompt_to_continue
 
-echo -e "${BLUE}========== [2/5] Creating and applying terraform stack... ==========${NC}"
+echo "========== [2/5] Creating and applying terraform stack... =========="
 time { create_and_apply_terraform_stack; }
 echo "Completed: Terraform stack creation and apply!"
 prompt_to_continue
 
-echo -e "${BLUE}========== [3/5] Adding host to inventory and emails.yml... ==========${NC}"
+echo "========== [3/5] Adding host to inventory and emails.yml... =========="
 time { add_to_ansible_inventory; }
 echo "Completed: Host added to inventory and emails.yml!"
 prompt_to_continue
 
-echo -e "${BLUE}========== [4/5] Running ansible against the new host... ==========${NC}"
+echo "========== [4/5] Running ansible against the new host... =========="
 time { run_ansible; }
 echo "Completed: Ansible run!"
 prompt_to_continue
 
-echo -e "${BLUE}========== [5/5] Importing database... ==========${NC}"
+echo "========== [5/5] Importing database... =========="
 # time { import_db; }
 echo "Completed: Database import!"
 echo
