@@ -1,0 +1,22 @@
+module "ec2_instance" {
+  source = "../modules/test_environment"
+  providers = {
+    aws.target = aws.target
+  }
+  hostname_prefix = "TERRAFORM_STACK_PREFIX_PLACEHOLDER"
+}
+
+output "instance_id" {
+  description = "The ID of the created EC2 instance"
+  value       = module.ec2_instance.instance_id
+}
+
+output "instance_public_ip" {
+  description = "The public IP address of the created EC2 instance"
+  value       = module.ec2_instance.instance_public_ip
+}
+
+output "ami_id" {
+  description = "AMI ID of the EC2 instance"
+  value       = module.ec2_instance.ami_id
+} 

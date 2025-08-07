@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+# Branch to use for ansible-cfg
+ANSIBLE_CFG_BRANCH="simple"
+
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <PREFIX>"
     exit 1
@@ -14,6 +17,19 @@ if ! [[ "$PREFIX" =~ ^[a-zA-Z0-9]+$ ]]; then
     echo "ERROR: PREFIX must be alphanumeric (letters and numbers only)."
     exit 1
 fi
+
+# Validate required tools
+validate_environment() {
+    local dependencies=("git" "terraform" "aws" "yq")
+    for cmd in "${dependencies[@]}"; do
+        if ! command -v "$cmd" &> /dev/null; then
+            echo "ERROR: $cmd could not be found, please install it."
+            exit 1
+        fi
+    done
+}
+
+validate_environment
 
 # Configuration. Override with environment variables.
 TERRAMATE_CLOUD_PATH=${TERRAMATE_CLOUD_PATH:-}
@@ -34,6 +50,9 @@ if [ -z "$ANSIBLE_CONFIG_ROOT" ]; then
     ANSIBLE_CONFIG_ROOT=$(mktemp -d)
     echo "Cloning Ansible repo to $ANSIBLE_CONFIG_ROOT"
     git clone "$ANSIBLE_CONFIG_REPO" "$ANSIBLE_CONFIG_ROOT"
+    pushd "$ANSIBLE_CONFIG_ROOT"
+    git checkout "$ANSIBLE_CFG_BRANCH"
+    popd
 fi
 
 # Derived variables
@@ -57,15 +76,15 @@ if [ -d "$STACK_PATH" ]; then
     pushd "$STACK_PATH"
     terraform init || {
         echo
-        echo "    ❌ terraform init failed!"
-        echo "    💡 try running this command: assume DevOps.AWSAdministratorAccess"
+        echo "    terraform init failed!"
+        echo "    try running this command: assume DevOps.AWSAdministratorAccess"
         echo
         exit 1
     }
     terraform destroy -auto-approve || {
         echo
-        echo "    ❌ terraform destroy failed!"
-        echo "    💡 try running this command: assume DevOps.AWSAdministratorAccess"
+        echo "    terraform destroy failed!"
+        echo "    try running this command: assume DevOps.AWSAdministratorAccess"
         echo
         exit 1
     }
@@ -80,32 +99,44 @@ else
 fi
 popd
 
-# Remove from Ansible inventory and host_vars
-echo "🧹 Cleaning up ansible inventory..."
-pushd "$ANSIBLE_CONFIG_ROOT"
-git checkout main
-git pull
+# Remove from emails.yml and inventory.yml
+EMAILS_FILE="$ANSIBLE_CONFIG_ROOT/group_vars/all/emails.yml"
+INVENTORY_FILE="$ANSIBLE_CONFIG_ROOT/inventory.yml"
 
-# Remove hostname from all inventory groups
-sed -i '' "/$FULL_HOSTNAME:/d" "$INVENTORY_FILE"
-
-# Remove host_vars directory
-if [ -d "$HOST_VARS_DIR" ]; then
-    rm -rf "$HOST_VARS_DIR"
-    echo "✅ Removed host_vars directory for $FULL_HOSTNAME"
+# Remove the host entry from host_emails using yq
+if [ -f "$EMAILS_FILE" ]; then
+    if yq eval ".host_emails | has(\"$FULL_HOSTNAME\")" "$EMAILS_FILE" | grep -q true; then
+        yq eval "del(.host_emails.\"$FULL_HOSTNAME\")" -i "$EMAILS_FILE"
+        echo "Removed $FULL_HOSTNAME from emails.yml"
+    else
+        echo "$FULL_HOSTNAME not found in emails.yml"
+    fi
 else
-    echo "ℹ️  No host_vars directory found for $FULL_HOSTNAME"
+    echo "Warning: $EMAILS_FILE not found"
 fi
 
-git add .
-git commit -m "Remove $FULL_HOSTNAME from inventory and host_vars" || echo "No changes to commit in Ansible repo."
-git push origin main
+# Remove the host entry from inventory.yml using yq
+if [ -f "$INVENTORY_FILE" ]; then
+    if yq eval ".all.hosts | has(\"$FULL_HOSTNAME\")" "$INVENTORY_FILE" | grep -q true; then
+        yq eval "del(.all.hosts.\"$FULL_HOSTNAME\")" -i "$INVENTORY_FILE"
+        echo "Removed $FULL_HOSTNAME from inventory.yml"
+    else
+        echo "$FULL_HOSTNAME not found in inventory.yml"
+    fi
+else
+    echo "Warning: $INVENTORY_FILE not found"
+fi
+
+# Commit and push to simple branch
+pushd "$ANSIBLE_CONFIG_ROOT"
+if [ -n "$(git status --porcelain)" ]; then
+    git add "$EMAILS_FILE" "$INVENTORY_FILE"
+    git commit -m "Remove $FULL_HOSTNAME from host_emails in emails.yml and inventory.yml"
+    git push origin "$ANSIBLE_CFG_BRANCH"
+fi
 popd
 
-echo "✅ Cleaned up ansible inventory for $FULL_HOSTNAME"
-
-remove-host-from-known-hosts.sh "$FULL_HOSTNAME"
-echo "✅ Destroyed $FULL_HOSTNAME"
+echo "Destroyed $FULL_HOSTNAME"
 
 play -q -n synth 0.1 sin 1100
 play -q -n synth 0.1 sin 990
