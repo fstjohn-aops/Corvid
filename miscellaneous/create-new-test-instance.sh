@@ -100,7 +100,6 @@ create_and_apply_terraform_stack() {
         echo "Stack doesn't exist! creating..."
         echo "Creating terraform stack..."
         echo "TERRAMATE_CLOUD_PATH: $TERRAMATE_CLOUD_PATH"
-        read -p "Press enter to continue..."
         terramate create stacks/accounts/aops_dev.487718497406/$FULL_HOSTNAME
         cp "$TERRAFORM_TEMPLATE_FILE" "$STACK_PATH/main.tf"
         sed -i '' "s/TERRAFORM_STACK_PREFIX_PLACEHOLDER/$PREFIX/g" "$STACK_PATH/main.tf"
@@ -117,9 +116,12 @@ create_and_apply_terraform_stack() {
     fi
     pushd "$STACK_PATH"
     terraform init
-    # Only apply terraform stack if CI is not defined
-    if [ -z "${CI+x}" ]; then
-        echo "Applying terraform stack..."
+    # Apply terraform stack with different behavior based on CI environment
+    if [ -n "${CI+x}" ]; then
+        echo "Applying terraform stack in CI mode (auto-approve)..."
+        terraform apply -auto-approve
+    else
+        echo "Applying terraform stack interactively..."
         terraform apply
     fi
     popd
@@ -144,7 +146,7 @@ add_to_ansible_inventory() {
     fi
     # Add host to inventory.yml using yq
     if ! yq eval ".all.hosts | has(\"$FULL_HOSTNAME\")" "$INVENTORY_FILE" | grep -q true; then
-        yq eval ".all.hosts.\"$FULL_HOSTNAME\" = {}" -i "$INVENTORY_FILE"
+        yq eval ".all.hosts.\"$FULL_HOSTNAME\"" -i "$INVENTORY_FILE"
         echo "Added $FULL_HOSTNAME to inventory.yml"
     else
         echo "$FULL_HOSTNAME already present in inventory.yml"
@@ -181,6 +183,8 @@ add_to_ansible_inventory() {
 }
 
 run_ansible() {
+    echo "Waiting before running ansible..."
+    sleep 60
     echo "Running ansible against the new host..."
     pushd "$ANSIBLE_CONFIG_ROOT"
     echo "Running initial_setup.yml with bootstrap key..."
@@ -239,7 +243,7 @@ echo "Completed: Ansible run!"
 prompt_to_continue
 
 echo "========== [5/5] Importing database... =========="
-# time { import_db; }
+time { import_db; }
 echo "Completed: Database import!"
 echo
 
