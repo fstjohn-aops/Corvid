@@ -146,7 +146,7 @@ add_to_ansible_inventory() {
     fi
     # Add host to inventory.yml using yq
     if ! yq eval ".all.hosts | has(\"$FULL_HOSTNAME\")" "$INVENTORY_FILE" | grep -q true; then
-        yq eval ".all.hosts.\"$FULL_HOSTNAME\"" -i "$INVENTORY_FILE"
+        yq eval ".all.hosts.\"$FULL_HOSTNAME\" = null" -i "$INVENTORY_FILE"
         echo "Added $FULL_HOSTNAME to inventory.yml"
     else
         echo "$FULL_HOSTNAME already present in inventory.yml"
