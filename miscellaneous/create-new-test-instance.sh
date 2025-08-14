@@ -139,18 +139,32 @@ create_and_apply_terraform_stack() {
     else
         echo "Stack already exists! not creating..."
     fi
-    pushd "$STACK_PATH"
-    terraform init
-    # Apply terraform stack with different behavior based on CI environment
-    if [ -n "${CI+x}" ]; then
-        echo "Applying terraform stack in CI mode (auto-approve)..."
-        terraform apply -auto-approve
-    else
-        echo "Applying terraform stack interactively..."
-        terraform apply
+    # Ensure stack has a Terraform configuration if directory exists but is missing main.tf
+    if [ ! -f "$STACK_PATH/main.tf" ]; then
+        echo "main.tf missing for $FULL_HOSTNAME, populating from template..."
+        cp "$TERRAFORM_TEMPLATE_FILE" "$STACK_PATH/main.tf"
+        sed -i '' "s/TERRAFORM_STACK_PREFIX_PLACEHOLDER/$PREFIX/g" "$STACK_PATH/main.tf"
+        # Only auto-commit if this script cloned the repo
+        if [ "${CLEANUP_TERRAMATE:-0}" = "1" ]; then
+            if [ -n "$(git status --porcelain "$STACK_PATH/main.tf")" ]; then
+                git add "$STACK_PATH/main.tf"
+                git commit -m "Populate main.tf for existing stack $FULL_HOSTNAME"
+                git push origin main
+            fi
+        fi
     fi
-    popd
-    popd
+    
+    pushd "$STACK_PATH"
+	echo "DEBUG: STACK_PATH=$STACK_PATH"
+	ls -la
+	terraform init
+	if [ -n "${CI+x}" ]; then
+		terraform apply -auto-approve
+	else
+		terraform apply
+	fi
+	popd
+	popd
 }
 
 add_to_ansible_inventory() {
