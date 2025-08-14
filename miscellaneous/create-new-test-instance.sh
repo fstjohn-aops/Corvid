@@ -24,15 +24,38 @@ BOOTSTRAP_SSH_KEY="${BOOTSTRAP_SSH_KEY:-$HOME/.ssh/bootstrap_key}"
 ANSIBLECONTROL_SSH_KEY="${ANSIBLECONTROL_SSH_KEY:-$HOME/.ssh/ansible_control_key}"
 TERRAFORM_TEMPLATE_FILE="$(dirname "$0")/test_instance.tf.template"
 EMAIL="${EMAIL:-devops@artofproblemsolving.com}"
+OFFICE_VPN_IP="${OFFICE_VPN_IP:-50.203.25.222}"
+
+# Flags indicating whether the repos were cloned by this script (and thus safe to delete on exit)
+CLEANUP_TERRAMATE=0
+CLEANUP_ANSIBLE=0
 
 # =============================
 # FUNCTION DEFINITIONS
 # =============================
 
+cleanup() {
+    echo "Cleaning up..."
+    if [ "${CLEANUP_TERRAMATE:-0}" = "1" ] && [ -n "${TERRAMATE_CLOUD_PATH:-}" ] && [ -d "$TERRAMATE_CLOUD_PATH" ]; then
+        rm -rf "$TERRAMATE_CLOUD_PATH"
+    fi
+    if [ "${CLEANUP_ANSIBLE:-0}" = "1" ] && [ -n "${ANSIBLE_CONFIG_ROOT:-}" ] && [ -d "$ANSIBLE_CONFIG_ROOT" ]; then
+        rm -rf "$ANSIBLE_CONFIG_ROOT"
+    fi
+}
+
 validate_and_check_environment() {
 
+    # Ensure script is being run from the office VPN public IP
+    CURRENT_IP=$(curl -s https://checkip.amazonaws.com || curl -s https://ifconfig.me)
+    if [ "$CURRENT_IP" != "$OFFICE_VPN_IP" ]; then
+        echo "ERROR: Your public IP is $CURRENT_IP, but this script must be run from the office VPN ($OFFICE_VPN_IP)."
+        echo "Please connect to the office VPN and try again."
+        exit 1
+    fi
+
     # Check required commands
-    local dependencies=("git" "terraform" "aws" "ssh-import-db.sh" "yq")
+    local dependencies=("git" "terraform" "aws" "ssh-import-db.sh" "yq" "play")
     for cmd in "${dependencies[@]}"; do
         if ! command -v "$cmd" &> /dev/null; then
             echo "$cmd could not be found, please install it."
@@ -78,6 +101,7 @@ clone_code_and_setup() {
         TERRAMATE_CLOUD_PATH=$(mktemp -d)
         echo "Cloning Terramate repo to $TERRAMATE_CLOUD_PATH"
         git clone "$TERRAMATE_CLOUD_REPO" "$TERRAMATE_CLOUD_PATH"
+        CLEANUP_TERRAMATE=1
     fi
     if [ -z "$ANSIBLE_CONFIG_ROOT" ]; then
         ANSIBLE_CONFIG_ROOT=$(mktemp -d)
@@ -86,10 +110,11 @@ clone_code_and_setup() {
         pushd "$ANSIBLE_CONFIG_ROOT"
         git checkout "$ANSIBLE_CFG_BRANCH"
         popd
+        CLEANUP_ANSIBLE=1
     fi
     BASE_PATH="$TERRAMATE_CLOUD_PATH/stacks/accounts/aops_dev.487718497406"
     STACK_PATH="$BASE_PATH/$FULL_HOSTNAME"
-    trap "echo 'Cleaning up...'; rm -rf '$TERRAMATE_CLOUD_PATH' '$ANSIBLE_CONFIG_ROOT'" EXIT
+    trap cleanup EXIT
 }
 
 create_and_apply_terraform_stack() {
@@ -144,9 +169,10 @@ add_to_ansible_inventory() {
     if ! yq eval '.' "$INVENTORY_FILE" > /dev/null 2>&1; then
         echo "ERROR: $INVENTORY_FILE is not valid YAML. Aborting."; exit 1
     fi
-    # Add host to inventory.yml using yq
-    if ! yq eval ".all.hosts | has(\"$FULL_HOSTNAME\")" "$INVENTORY_FILE" | grep -q true; then
-        yq eval ".all.hosts.\"$FULL_HOSTNAME\" = null" -i "$INVENTORY_FILE"
+    # Add host to inventory.yml using awk
+    if ! grep -q "^        $FULL_HOSTNAME:" "$INVENTORY_FILE"; then
+        # Insert new host line after "      hosts:" line using awk
+        awk -v hostname="$FULL_HOSTNAME" '/^      hosts:/ { print; print "        " hostname ":"; next } { print }' "$INVENTORY_FILE" > temp_inventory.yml && mv temp_inventory.yml "$INVENTORY_FILE"
         echo "Added $FULL_HOSTNAME to inventory.yml"
     else
         echo "$FULL_HOSTNAME already present in inventory.yml"
