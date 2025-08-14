@@ -54,14 +54,14 @@ validate_and_check_environment() {
         exit 1
     fi
 
-    # Check required commands
-    local dependencies=("git" "terraform" "aws" "ssh-import-db.sh" "yq" "play")
-    for cmd in "${dependencies[@]}"; do
-        if ! command -v "$cmd" &> /dev/null; then
-            echo "$cmd could not be found, please install it."
-            exit 1
-        fi
-    done
+	# Check required commands
+	local dependencies=("git" "terraform" "aws" "ssh-import-db.sh" "yq" "play" "terramate")
+	for cmd in "${dependencies[@]}"; do
+		if ! command -v "$cmd" &> /dev/null; then
+			echo "$cmd could not be found, please install it."
+			exit 1
+		fi
+	done
 
     # Validate PREFIX
     if ! [[ "$PREFIX" =~ ^[a-zA-Z0-9]+$ ]]; then
