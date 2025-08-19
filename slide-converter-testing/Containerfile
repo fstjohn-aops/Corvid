@@ -1,0 +1,11 @@
+FROM --platform=linux/arm64 amazon/aws-cli:2.15.0
+
+# Install required commands
+RUN yum install -y hostname jq
+
+# Copy the upload script
+COPY upload-artifact.sh /usr/local/bin/upload-artifact.sh
+RUN chmod +x /usr/local/bin/upload-artifact.sh
+
+# Set the entrypoint to run the upload script
+ENTRYPOINT ["/usr/local/bin/upload-artifact.sh"] 
