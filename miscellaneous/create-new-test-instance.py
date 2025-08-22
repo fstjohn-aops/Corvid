@@ -198,9 +198,9 @@ def create_and_apply_terraform_stack(stack_path, terramate_cloud_path, prefix, f
     run(["git", "commit", "-m", f"Create or update test instance {full_hostname}"], cwd=terramate_cloud_path, check=False, log_file=log_file, debug=DEBUG_MODE)
     run(["git", "push", "origin", "main"], cwd=terramate_cloud_path, log_file=log_file, debug=DEBUG_MODE)
     run(["terraform", "init"], cwd=stack_path, log_file=log_file, debug=DEBUG_MODE)
-    # Add auto-approve flag when running in CI mode
+    # Use auto-approve unless in debug mode (so you can see prompts and output)
     terraform_apply_cmd = ["terraform", "apply"]
-    if ci:
+    if not DEBUG_MODE:
         terraform_apply_cmd.append("-auto-approve")
     run(terraform_apply_cmd, cwd=stack_path, log_file=log_file, debug=DEBUG_MODE)
     return stack_path
