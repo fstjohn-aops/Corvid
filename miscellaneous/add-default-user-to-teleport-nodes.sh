@@ -5,22 +5,29 @@
 hostnames=($(tsh ls --format=json | jq -r '.[].spec.hostname'))
 
 # List of users to try (you can populate this)
-users=("ec2-user" "ubuntu" "cloud-user" "centos")
+users=("website" "ec2-user" "ubuntu" "cloud-user" "centos")
 
 # Limit the number of hosts to run SSH commands on
-limit=1
+limit=10
 
 # Show max 10 nodes, add ellipses if more
 max_display=10
+
+# Colors for output
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
 # Function to manage teleport configuration
 manage_teleport_config() {
     local target_user="${1:-}"
     
-    echo "=== Teleport Configuration Management ==="
+    echo -e "${BLUE}=== Teleport Configuration Management ===${NC}"
     
     # Task 1: Check if user variable is defined
-    echo "Task 1: Checking if user variable is defined..."
+    echo -e "${BLUE}Task 1: Checking if user variable is defined...${NC}"
     if [[ -z "$target_user" ]]; then
         echo "  Error: No user specified. Usage: manage_teleport_config <username>"
         return 1
@@ -28,7 +35,7 @@ manage_teleport_config() {
     echo "  User variable defined: $target_user"
     
     # Task 2: Check if that user exists
-    echo "Task 2: Checking if user '$target_user' exists..."
+    echo -e "${BLUE}Task 2: Checking if user '$target_user' exists...${NC}"
     if id "$target_user" &>/dev/null; then
         echo "  User '$target_user' exists"
     else
@@ -37,7 +44,7 @@ manage_teleport_config() {
     fi
     
     # Task 3: Add user's name to /etc/teleport/aops-default-user
-    echo "Task 3: Adding user name to /etc/teleport/aops-default-user..."
+    echo -e "${BLUE}Task 3: Adding user name to /etc/teleport/aops-default-user...${NC}"
     if [[ ! -d "/etc/teleport" ]]; then
         echo "  Creating /etc/teleport directory..."
         sudo mkdir -p /etc/teleport
@@ -46,7 +53,7 @@ manage_teleport_config() {
     echo "  User name written to /etc/teleport/aops-default-user"
     
     # Task 4: Install yq
-    echo "Task 4: Installing yq..."
+    echo -e "${BLUE}Task 4: Installing yq...${NC}"
     if ! command -v yq &> /dev/null; then
         echo "  Downloading yq from GitHub releases..."
         # Detect architecture for Linux hosts
@@ -65,7 +72,7 @@ manage_teleport_config() {
     fi
     
     # Task 5: Read /etc/teleport.yaml and add the new command
-    echo "Task 5: Modifying /etc/teleport.yaml..."
+    echo -e "${BLUE}Task 5: Modifying /etc/teleport.yaml...${NC}"
     if [[ ! -f "/etc/teleport.yaml" ]]; then
         echo "  Error: /etc/teleport.yaml not found"
         return 1
@@ -86,7 +93,7 @@ manage_teleport_config() {
     echo "  /etc/teleport.yaml updated successfully"
     
     # Task 6: Uninstall yq
-    echo "Task 6: Uninstalling yq..."
+    echo -e "${BLUE}Task 6: Uninstalling yq...${NC}"
     if command -v yq &> /dev/null; then
         if command -v brew &> /dev/null; then
             echo "  Uninstalling yq via Homebrew..."
@@ -103,7 +110,7 @@ manage_teleport_config() {
     fi
     
     # Task 7: Reload teleport service
-    echo "Task 7: Reloading teleport service..."
+    echo -e "${BLUE}Task 7: Reloading teleport service...${NC}"
     if sudo systemctl reload teleport; then
         echo "  Teleport service reloaded successfully"
     else
@@ -111,7 +118,7 @@ manage_teleport_config() {
         echo "  Try: sudo systemctl restart teleport"
     fi
     
-    echo "=== Teleport Configuration Management Complete ==="
+    echo -e "${BLUE}=== Teleport Configuration Management Complete ===${NC}"
     echo "Summary:"
     echo "  - User '$target_user' verified and configured"
     echo "  - /etc/teleport/aops-default-user created"
@@ -141,14 +148,14 @@ for hostname in "${hostnames[@]}"; do
         break
     fi
     
-    echo "Connecting to $hostname..."
+    echo -e "${YELLOW}Connecting to $hostname...${NC}"
     
     # Try each user until one works
     connected=false
     successful_user=""
     for user in "${users[@]}"; do
         if tsh ssh "$user@$hostname" echo "Connection test successful" 2>/dev/null; then
-            echo "  Success with user: $user"
+            echo -e "  Success with user: ${GREEN}$user${NC}"
             connected=true
             successful_user="$user"
             break
@@ -162,7 +169,7 @@ for hostname in "${hostnames[@]}"; do
         # Run the teleport config management function on this host
         tsh ssh "$successful_user@$hostname" "$(declare -f manage_teleport_config); manage_teleport_config '$successful_user'"
     else
-        echo "  Failed to connect with any user"
+        echo -e "  ${RED}Failed to connect with any user${NC}"
     fi
     
     echo ""
