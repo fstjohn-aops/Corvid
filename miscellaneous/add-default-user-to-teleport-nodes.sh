@@ -1,17 +1,21 @@
 #!/bin/bash
 
-# Simple script to list all teleport nodes as JSON
-# Store hostnames in an array for iteration
-hostnames=($(tsh ls --format=json | jq -r '.[].spec.hostname'))
+set -euo pipefail
+
+# =============================================================================
+# CONFIGURATION - Modify these values as needed
+# =============================================================================
+
+# Script behavior
+LIMIT=10
+MAX_DISPLAY=10
 
 # List of users to try (you can populate this)
-users=("website" "ec2-user" "ubuntu" "cloud-user" "centos")
+USERS=("website" "ec2-user" "ubuntu" "cloud-user" "centos")
 
-# Limit the number of hosts to run SSH commands on
-limit=10
-
-# Show max 10 nodes, add ellipses if more
-max_display=10
+# =============================================================================
+# SCRIPT LOGIC - Don't modify below this line
+# =============================================================================
 
 # Colors for output
 BLUE='\033[0;34m'
@@ -24,10 +28,10 @@ NC='\033[0m' # No Color
 manage_teleport_config() {
     local target_user="${1:-}"
     
-    echo -e "${BLUE}=== Teleport Configuration Management ===${NC}"
+    echo -e "=== Teleport Configuration Management ==="
     
     # Task 1: Check if user variable is defined
-    echo -e "${BLUE}Task 1: Checking if user variable is defined...${NC}"
+    echo -e "Task 1: Checking if user variable is defined..."
     if [[ -z "$target_user" ]]; then
         echo "  Error: No user specified. Usage: manage_teleport_config <username>"
         return 1
@@ -35,7 +39,7 @@ manage_teleport_config() {
     echo "  User variable defined: $target_user"
     
     # Task 2: Check if that user exists
-    echo -e "${BLUE}Task 2: Checking if user '$target_user' exists...${NC}"
+    echo -e "Task 2: Checking if user '$target_user' exists..."
     if id "$target_user" &>/dev/null; then
         echo "  User '$target_user' exists"
     else
@@ -43,8 +47,8 @@ manage_teleport_config() {
         return 1
     fi
     
-    # Task 3: Add user's name to /etc/teleport/aops-default-user
-    echo -e "${BLUE}Task 3: Adding user name to /etc/teleport/aops-default-user...${NC}"
+    # Task 3: Add user's name to user file
+    echo -e "Task 3: Adding user name to /etc/teleport/aops-default-user..."
     if [[ ! -d "/etc/teleport" ]]; then
         echo "  Creating /etc/teleport directory..."
         sudo mkdir -p /etc/teleport
@@ -53,7 +57,7 @@ manage_teleport_config() {
     echo "  User name written to /etc/teleport/aops-default-user"
     
     # Task 4: Install yq
-    echo -e "${BLUE}Task 4: Installing yq...${NC}"
+    echo -e "Task 4: Installing yq..."
     if ! command -v yq &> /dev/null; then
         echo "  Downloading yq from GitHub releases..."
         # Detect architecture for Linux hosts
@@ -71,8 +75,8 @@ manage_teleport_config() {
         echo "  yq already installed"
     fi
     
-    # Task 5: Read /etc/teleport.yaml and add the new command
-    echo -e "${BLUE}Task 5: Modifying /etc/teleport.yaml...${NC}"
+    # Task 5: Read teleport config and add the new command
+    echo -e "Task 5: Modifying /etc/teleport.yaml..."
     if [[ ! -f "/etc/teleport.yaml" ]]; then
         echo "  Error: /etc/teleport.yaml not found"
         return 1
@@ -83,17 +87,16 @@ manage_teleport_config() {
     echo "  Backup created: /etc/teleport.yaml.backup"
     
     # Add the new command to ssh_service.commands
-    if yq eval '.ssh_service.commands[0].name == "AoPS Default User"' /etc/teleport.yaml &>/dev/null; then
-        echo "  Command already exists, updating..."
-        yq eval '.ssh_service.commands[0] = {"name": "AoPS-Default-User", "command": ["/bin/cat", "/etc/teleport/aops-default-user"], "period": "12h0m0s"}' /etc/teleport.yaml | sudo tee /etc/teleport.yaml > /dev/null
+    if yq eval '.ssh_service.commands[] | select(.name == "aops_default_user")' /etc/teleport.yaml &>/dev/null; then
+        echo "  Command already exists, skipping..."
     else
         echo "  Adding new command..."
-        yq eval '.ssh_service.commands += [{"name": "AoPS-Default-User", "command": ["/bin/cat", "/etc/teleport/aops-default-user"], "period": "12h0m0s"}]' /etc/teleport.yaml | sudo tee /etc/teleport.yaml > /dev/null
+        yq eval '.ssh_service.commands += [{"name": "aops_default_user", "command": ["/bin/cat", "/etc/teleport/aops-default-user"], "period": "1h0m0s"}]' /etc/teleport.yaml | sudo tee /etc/teleport.yaml > /dev/null
     fi
     echo "  /etc/teleport.yaml updated successfully"
     
     # Task 6: Uninstall yq
-    echo -e "${BLUE}Task 6: Uninstalling yq...${NC}"
+    echo -e "Task 6: Uninstalling yq..."
     if command -v yq &> /dev/null; then
         if command -v brew &> /dev/null; then
             echo "  Uninstalling yq via Homebrew..."
@@ -110,7 +113,7 @@ manage_teleport_config() {
     fi
     
     # Task 7: Reload teleport service
-    echo -e "${BLUE}Task 7: Reloading teleport service...${NC}"
+    echo -e "Task 7: Reloading teleport service..."
     if sudo systemctl reload teleport; then
         echo "  Teleport service reloaded successfully"
     else
@@ -118,7 +121,7 @@ manage_teleport_config() {
         echo "  Try: sudo systemctl restart teleport"
     fi
     
-    echo -e "${BLUE}=== Teleport Configuration Management Complete ===${NC}"
+    echo -e "=== Teleport Configuration Management Complete ==="
     echo "Summary:"
     echo "  - User '$target_user' verified and configured"
     echo "  - /etc/teleport/aops-default-user created"
@@ -126,25 +129,29 @@ manage_teleport_config() {
     echo "  - Backup created at /etc/teleport.yaml.backup"
 }
 
+# Store hostnames in an array for iteration
+hostnames=($(tsh ls --format=json | jq -r '.[].spec.hostname'))
+
 # Now you can iterate over the hostnames
 echo "Found ${#hostnames[@]} nodes:"
 
+# Show max nodes, add ellipses if more
 for i in "${!hostnames[@]}"; do
-    if [[ $i -ge $max_display ]]; then
-        echo "  ... and $(( ${#hostnames[@]} - max_display )) more nodes"
+    if [[ $i -ge $MAX_DISPLAY ]]; then
+        echo "  ... and $(( ${#hostnames[@]} - MAX_DISPLAY )) more nodes"
         break
     fi
     echo "  - ${hostnames[$i]}"
 done
 
 echo ""
-echo "SSH'ing to each host and running command (limited to $limit hosts)..."
+echo "SSH'ing to each host and running command (limited to $LIMIT hosts)..."
 
 # SSH to each host and run the command (limited by the limit constant)
 host_count=0
 for hostname in "${hostnames[@]}"; do
-    if [[ $host_count -ge $limit ]]; then
-        echo "Reached limit of $limit hosts, stopping..."
+    if [[ $host_count -ge $LIMIT ]]; then
+        echo "Reached limit of $LIMIT hosts, stopping..."
         break
     fi
     
@@ -153,7 +160,7 @@ for hostname in "${hostnames[@]}"; do
     # Try each user until one works
     connected=false
     successful_user=""
-    for user in "${users[@]}"; do
+    for user in "${USERS[@]}"; do
         if tsh ssh "$user@$hostname" echo "Connection test successful" 2>/dev/null; then
             echo -e "  Success with user: ${GREEN}$user${NC}"
             connected=true

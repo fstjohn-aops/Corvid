@@ -1,4 +1,4 @@
 #!/bin/bash
 
-# Simple script to show AoPS-Default-User labels for all teleport hosts
-tsh ls --format=json | jq -r '.[] | "\(.spec.hostname)\n  AoPS-Default-User: \(.spec.cmd_labels."AoPS-Default-User".result // "not set")"'
+# Simple script to show aops_default_user labels for all teleport hosts
+tsh ls --format=json | jq -r '.[] | "\(.spec.hostname)\n  aops_default_user: \(.spec.cmd_labels."aops_default_user".result // "not set")"'
