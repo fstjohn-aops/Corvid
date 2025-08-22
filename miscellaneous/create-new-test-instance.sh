@@ -64,10 +64,10 @@ validate_and_check_environment() {
 	done
 
     # Validate PREFIX
-    if ! [[ "$PREFIX" =~ ^[a-zA-Z0-9]+$ ]]; then
-        echo "ERROR: PREFIX must be alphanumeric (letters and numbers only)."
+    if ! [[ "$PREFIX" =~ ^[a-zA-Z0-9-]+$ ]]; then
+        echo "ERROR: PREFIX must be alphanumeric with optional dashes (letters, numbers, and dashes only)."
         exit 1
-    fi
+fi
 
     # Expand and resolve SSH keys and vault password file to absolute paths
     BOOTSTRAP_SSH_KEY=$(realpath "$BOOTSTRAP_SSH_KEY")

@@ -13,8 +13,8 @@ fi
 PREFIX="$1"
 FULL_HOSTNAME="$PREFIX.aopstest.com"
 
-if ! [[ "$PREFIX" =~ ^[a-zA-Z0-9]+$ ]]; then
-    echo "ERROR: PREFIX must be alphanumeric (letters and numbers only)."
+if ! [[ "$PREFIX" =~ ^[a-zA-Z0-9-]+$ ]]; then
+    echo "ERROR: PREFIX must be alphanumeric with optional dashes (letters, numbers, and dashes only)."
     exit 1
 fi
 

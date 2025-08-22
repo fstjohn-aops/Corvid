@@ -34,17 +34,11 @@ stderr_console = Console(stderr=True)
 # =============================
 
 DEFAULT_ANSIBLE_CFG_BRANCH = "simple"
-DEFAULT_VAULT_PASSWORD_FILE = str(Path.home() / ".aops_ansible_vault_pw")
 DEFAULT_TERRAMATE_CLOUD_REPO = "git@github.com:aops-ba/terramate-cloud.git"
 DEFAULT_ANSIBLE_CONFIG_REPO = "git@github.com:aops-ba/ansible-cfg.git"
-DEFAULT_BOOTSTRAP_SSH_KEY = str(Path.home() / ".ssh/bootstrap_key")
-DEFAULT_ANSIBLECONTROL_SSH_KEY = str(Path.home() / ".ssh/ansible_control_key")
-DEFAULT_TERRAFORM_TEMPLATE_FILE = str(Path(__file__).parent / "test_instance.tf.template")
-DEFAULT_EMAIL = "devops@artofproblemsolving.com"
-DEFAULT_OFFICE_VPN_IP = "50.203.25.222"
 DEFAULT_STACK_ACCOUNT_PATH = "stacks/accounts/aops_dev.487718497406"
 REQUIRED_DEPENDENCIES = [
-    "git", "terraform", "aws", "ssh-import-db.sh", "yq", "play", "terramate"
+    "git", "terraform", "aws", "yq", "play", "terramate"
 ]
 
 # =============================
@@ -63,12 +57,11 @@ def get_env(var, default=None, required=False):
 # =============================
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Create a new test EC2 instance and configure it.")
-    parser.add_argument("prefix", help="Prefix for the new instance (alphanumeric)")
+    parser = argparse.ArgumentParser(description="Destroy a test EC2 instance and clean up configuration.")
+    parser.add_argument("prefix", help="Prefix for the instance to destroy (alphanumeric)")
     parser.add_argument("--ci", action="store_true", help="Run in CI mode (no prompts)")
     parser.add_argument("--verbose", action="store_true", help="Show all command output in real time (dim info lines still shown)")
     parser.add_argument("--debug", action="store_true", help="Stream all subprocess output directly to stdout/stderr (overrides --verbose, disables log file)")
-    parser.add_argument("--plain", action="store_true", help="Stop after Terraform apply (skip Ansible setup and database import)")
     return parser.parse_args()
 
 # =============================
@@ -169,74 +162,39 @@ def clone_ansible_repo(repo_url, path, branch, log_file):
     run(["git", "checkout", branch], cwd=path, log_file=log_file, debug=DEBUG_MODE)
     return path
 
-# Timed operation for creating stack directory
-@dimmed_timed_step("Creating stack directory", lambda result, *a, **k: f"Created stack directory at {result}")
-def create_stack_directory(stack_path, terramate_cloud_path, full_hostname, verbose, log_file, debug):
-    run(["terramate", "create", f"stacks/accounts/aops_dev.487718497406/{full_hostname}"], cwd=terramate_cloud_path, verbose=verbose, log_file=log_file, debug=debug)
-    return stack_path
-
-# Timed operation for copying template
-def copy_template(terraform_template_file, main_tf, prefix):
-    with open(terraform_template_file) as src, open(main_tf, "w") as dst:
-        dst.write(src.read().replace("TERRAFORM_STACK_PREFIX_PLACEHOLDER", prefix))
-    return main_tf
-
 # =============================
 # MAJOR STEP FUNCTIONS
 # =============================
 
-# Redefine all major operations to use only dimmed_timed_step
-@dimmed_timed_step("Creating and applying terraform stack...", lambda result, *a, **k: f"Created and applied Terraform stack at {k.get('stack_path', '<unknown>')}")
-def create_and_apply_terraform_stack(stack_path, terramate_cloud_path, prefix, full_hostname, terraform_template_file, log_file, ci):
+@dimmed_timed_step("Destroying Terraform stack and removing resources...", lambda result, *a, **k: f"Destroyed Terraform stack and removed resources for {k.get('full_hostname', '<host>')}")
+def destroy_terraform_stack(stack_path, terramate_cloud_path, full_hostname, log_file):
     if not stack_path.exists():
-        run(["terramate", "create", f"stacks/accounts/aops_dev.487718497406/{full_hostname}"], cwd=terramate_cloud_path, log_file=log_file, debug=DEBUG_MODE)
-    main_tf = stack_path / "main.tf"
-    if not main_tf.exists():
-        with open(terraform_template_file) as src, open(main_tf, "w") as dst:
-            dst.write(src.read().replace("TERRAFORM_STACK_PREFIX_PLACEHOLDER", prefix))
-    run(["git", "add", "."], cwd=terramate_cloud_path, log_file=log_file, debug=DEBUG_MODE)
-    run(["git", "commit", "-m", f"Create or update test instance {full_hostname}"], cwd=terramate_cloud_path, check=False, log_file=log_file, debug=DEBUG_MODE)
-    run(["git", "push", "origin", "main"], cwd=terramate_cloud_path, log_file=log_file, debug=DEBUG_MODE)
+        console.print(f"[yellow]Stack directory {stack_path} does not exist. Skipping terraform destroy.[/yellow]")
+        return False
+    
+    # Navigate to stack directory and destroy
     run(["terraform", "init"], cwd=stack_path, log_file=log_file, debug=DEBUG_MODE)
-    # Add auto-approve flag when running in CI mode
-    terraform_apply_cmd = ["terraform", "apply"]
-    if ci:
-        terraform_apply_cmd.append("-auto-approve")
-    run(terraform_apply_cmd, cwd=stack_path, log_file=log_file, debug=DEBUG_MODE)
-    return stack_path
+    run(["terraform", "destroy", "-auto-approve"], cwd=stack_path, log_file=log_file, debug=DEBUG_MODE)
+    
+    # Remove stack directory
+    shutil.rmtree(stack_path)
+    
+    # Commit and push changes
+    run(["git", "add", "."], cwd=terramate_cloud_path, log_file=log_file, debug=DEBUG_MODE)
+    run(["git", "commit", "-m", f"Destroy test instance {full_hostname} (remove stack)"], 
+        cwd=terramate_cloud_path, check=False, log_file=log_file, debug=DEBUG_MODE)
+    run(["git", "push", "origin", "main"], cwd=terramate_cloud_path, log_file=log_file, debug=DEBUG_MODE)
+    
+    return True
 
-@dimmed_timed_step("Adding host to inventory and emails.yml...", lambda result, *a, **k: f"Added {k.get('full_hostname', '<host>')} to inventory and emails.yml in {k.get('ansible_config_root', '<root>')}")
-def add_to_ansible_inventory(ansible_config_root, full_hostname, email, log_file):
+@dimmed_timed_step("Removing host from inventory and emails.yml...", lambda result, *a, **k: f"Removed {k.get('full_hostname', '<host>')} from inventory and emails.yml")
+def remove_from_ansible_inventory(ansible_config_root, full_hostname, log_file):
     inventory_mgr = InventoryManager(ansible_config_root)
-    inventory_mgr.ensure_host(
+    inventory_mgr.remove_host(
         full_hostname=full_hostname,
-        email=email,
         log_file=log_file
     )
     return ansible_config_root
-
-@dimmed_timed_step("Running ansible against the new host...", lambda result, *a, **k: f"Ran Ansible playbooks for {k.get('full_hostname', '<host>')}")
-def run_ansible(ansible_config_root, full_hostname, bootstrap_ssh_key, ansiblecontrol_ssh_key, vault_password_file, log_file):
-    run([
-        "ansible-playbook", "initial_setup.yml",
-        "--private-key", bootstrap_ssh_key,
-        "--limit", full_hostname,
-        "--vault-password-file", vault_password_file,
-        "--ssh-common-args", "-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
-    ], cwd=ansible_config_root, log_file=log_file, debug=DEBUG_MODE)
-    run([
-        "ansible-playbook", "web_setup.yml",
-        "--private-key", ansiblecontrol_ssh_key,
-        "--limit", full_hostname,
-        "--vault-password-file", vault_password_file,
-        "--ssh-common-args", "-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
-    ], cwd=ansible_config_root, log_file=log_file, debug=DEBUG_MODE)
-    return full_hostname
-
-@dimmed_timed_step("Importing database", lambda result, *a, **k: f"Imported database for {result}")
-def import_db(full_hostname, log_file):
-    run(["ssh-import-db.sh", full_hostname], log_file=log_file, debug=DEBUG_MODE)
-    return full_hostname
 
 # =============================
 # INVENTORY/EMAIL MANAGEMENT
@@ -248,40 +206,57 @@ class InventoryManager:
         self.inventory_file = self.ansible_config_root / "inventory.yml"
         self.emails_file = self.ansible_config_root / "group_vars/all/emails.yml"
 
-    def add_host_to_inventory(self, full_hostname: str):
-        lines = self.inventory_file.read_text().splitlines(keepends=True)
-        out = []
-        inserted = False
-        for i, line in enumerate(lines):
-            out.append(line)
-            if not inserted and line.strip() == 'hosts:':
-                indent = len(line) - len(line.lstrip()) + 2
-                out.append(' ' * indent + f'{full_hostname}:\n')
-                inserted = True
-        self.inventory_file.write_text(''.join(out))
-
-    def add_email_for_host(self, full_hostname: str, email: str):
-        with open(self.emails_file) as f:
-            emails = yaml.safe_load(f)
-        if "host_emails" not in emails:
-            emails["host_emails"] = {}
-        if full_hostname not in emails["host_emails"]:
-            emails["host_emails"][full_hostname] = email
-            with open(self.emails_file, "w") as f:
-                yaml.safe_dump(emails, f, default_flow_style=False)
+    def remove_host_from_inventory(self, full_hostname: str):
+        """Remove host from inventory.yml using yq"""
+        if not self.inventory_file.exists():
+            console.print(f"[yellow]Warning: {self.inventory_file} not found[/yellow]")
+            return False
+        
+        # Check if host exists in inventory
+        result = subprocess.run(["yq", "eval", f".all.hosts | has(\"{full_hostname}\")", str(self.inventory_file)], 
+                    capture_output=True, text=True, check=False)
+        if "true" in result.stdout:
+            run(["yq", "eval", f"del(.all.hosts.\"{full_hostname}\")", "-i", str(self.inventory_file)], 
+                log_file=None, debug=DEBUG_MODE)
+            console.print(f"Removed {full_hostname} from inventory.yml")
             return True
-        return False
+        else:
+            console.print(f"{full_hostname} not found in inventory.yml")
+            return False
 
-    def ensure_host(self, full_hostname: str, email: str, log_file):
-        inventory_lines = self.inventory_file.read_text()
-        if f'{full_hostname}:' not in inventory_lines:
-            self.add_host_to_inventory(full_hostname)
-        self.add_email_for_host(full_hostname, email)
-        if DEBUG_MODE:
-            console.print(f"[dim]Committing and pushing Ansible inventory changes...[/dim]")
-        run(["git", "add", str(self.inventory_file), str(self.emails_file)], cwd=self.ansible_config_root, log_file=log_file, debug=DEBUG_MODE)
-        run(["git", "commit", "-m", f"Add {full_hostname} to inventory and emails.yml"], cwd=self.ansible_config_root, check=False, log_file=log_file, debug=DEBUG_MODE)
-        run(["git", "push", "origin", "simple"], cwd=self.ansible_config_root, log_file=log_file, debug=DEBUG_MODE)
+    def remove_email_for_host(self, full_hostname: str):
+        """Remove host from emails.yml using yq"""
+        if not self.emails_file.exists():
+            console.print(f"[yellow]Warning: {self.emails_file} not found[/yellow]")
+            return False
+        
+        # Check if host exists in emails
+        result = subprocess.run(["yq", "eval", f".host_emails | has(\"{full_hostname}\")", str(self.emails_file)], 
+                    capture_output=True, text=True, check=False)
+        if "true" in result.stdout:
+            run(["yq", "eval", f"del(.host_emails.\"{full_hostname}\")", "-i", str(self.emails_file)], 
+                log_file=None, debug=DEBUG_MODE)
+            console.print(f"Removed {full_hostname} from emails.yml")
+            return True
+        else:
+            console.print(f"{full_hostname} not found in emails.yml")
+            return False
+
+    def remove_host(self, full_hostname: str, log_file):
+        """Remove host from both inventory and emails files"""
+        inventory_removed = self.remove_host_from_inventory(full_hostname)
+        emails_removed = self.remove_email_for_host(full_hostname)
+        
+        # Only commit if there were changes
+        if inventory_removed or emails_removed:
+            if DEBUG_MODE:
+                console.print(f"[dim]Committing and pushing Ansible inventory changes...[/dim]")
+            run(["git", "add", str(self.inventory_file), str(self.emails_file)], 
+                cwd=self.ansible_config_root, log_file=log_file, debug=DEBUG_MODE)
+            run(["git", "commit", "-m", f"Remove {full_hostname} from host_emails in emails.yml and inventory.yml"], 
+                cwd=self.ansible_config_root, check=False, log_file=log_file, debug=DEBUG_MODE)
+            run(["git", "push", "origin", "simple"], 
+                cwd=self.ansible_config_root, log_file=log_file, debug=DEBUG_MODE)
 
 # =============================
 # MAIN EXECUTION
@@ -290,7 +265,7 @@ class InventoryManager:
 def print_step_header(step_num, step_desc):
     # Use a pretty unicode box-drawing symbol for the header
     bar = '━'
-    header = f"{bar*3} [{step_num}/5] {step_desc} {bar*3}"
+    header = f"{bar*3} [{step_num}/3] {step_desc} {bar*3}"
     console.print(header, style="bold cyan")
 
 def prompt_to_continue(ci):
@@ -305,87 +280,69 @@ def main():
     ci = args.ci or bool(os.environ.get("CI"))
     DEBUG_MODE = args.debug
 
+    # Validate PREFIX format
+    if not prefix.replace('_', '').isalnum():
+        stderr_console.print("[red]ERROR: PREFIX must be alphanumeric (letters and numbers only).[/red]")
+        sys.exit(1)
+
     # Config
     ansible_cfg_branch = get_env("ANSIBLE_CFG_BRANCH", DEFAULT_ANSIBLE_CFG_BRANCH)
-    vault_password_file = get_env("VAULT_PASSWORD_FILE", DEFAULT_VAULT_PASSWORD_FILE)
     terramate_cloud_repo = get_env("TERRAMATE_CLOUD_REPO", DEFAULT_TERRAMATE_CLOUD_REPO)
     ansible_config_repo = get_env("ANSIBLE_CONFIG_REPO", DEFAULT_ANSIBLE_CONFIG_REPO)
-    bootstrap_ssh_key = get_env("BOOTSTRAP_SSH_KEY", DEFAULT_BOOTSTRAP_SSH_KEY)
-    ansiblecontrol_ssh_key = get_env("ANSIBLECONTROL_SSH_KEY", DEFAULT_ANSIBLECONTROL_SSH_KEY)
-    terraform_template_file = DEFAULT_TERRAFORM_TEMPLATE_FILE
-    email = get_env("EMAIL", DEFAULT_EMAIL)
-    office_vpn_ip = get_env("OFFICE_VPN_IP", DEFAULT_OFFICE_VPN_IP)
+    
+    # Check for Cloudflare token
+    if not get_env("CLOUDFLARE_API_TOKEN", required=True):
+        stderr_console.print("[red]ERROR: CLOUDFLARE_API_TOKEN is not set in the environment.[/red]")
+        sys.exit(1)
 
-    log_file_ctx = tempfile.NamedTemporaryFile("w+t", delete=False, prefix="create-test-instance-", suffix=".log") if not DEBUG_MODE else None
+    log_file_ctx = tempfile.NamedTemporaryFile("w+t", delete=False, prefix="destroy-test-instance-", suffix=".log") if not DEBUG_MODE else None
     log_file = log_file_ctx if log_file_ctx else None
     log_path = log_file.name if log_file else None
+    
     try:
         print_step_header(1, "Cloning code and setting up")
         import uuid
         unique_id = uuid.uuid4().hex[:8]
         terramate_cloud_path = Path(os.environ.get("TERRAMATE_CLOUD_PATH") or f"/tmp/terramate-cloud-{prefix}-{unique_id}")
         ansible_config_root = Path(os.environ.get("ANSIBLE_CONFIG_ROOT") or f"/tmp/ansible-cfg-{prefix}-{unique_id}")
+        
         if not terramate_cloud_path.exists():
             clone_terramate_repo(terramate_cloud_repo, terramate_cloud_path, log_file)
         if not ansible_config_root.exists():
             clone_ansible_repo(ansible_config_repo, ansible_config_root, ansible_cfg_branch, log_file)
+        
         base_path = terramate_cloud_path / DEFAULT_STACK_ACCOUNT_PATH
         stack_path = base_path / full_hostname
+        
         prompt_to_continue(ci)
 
-        print_step_header(2, "Creating and applying terraform stack")
-        create_and_apply_terraform_stack(
-            log_file=log_file,
+        print_step_header(2, "Destroying Terraform stack and removing resources")
+        destroy_terraform_stack(
             stack_path=stack_path,
             terramate_cloud_path=terramate_cloud_path,
-            prefix=prefix,
             full_hostname=full_hostname,
-            terraform_template_file=terraform_template_file,
-            ci=ci
-        )
-        
-        # Check if we should stop after Terraform apply
-        if args.plain:
-            console.print("\n[bold green]✓[/bold green] Plain mode enabled - stopping after Terraform apply")
-            console.print(f"[dim]Instance {full_hostname} is ready but not configured.[/dim]")
-            console.print("[dim]Run the remaining steps manually or re-run without --plain to complete setup.[/dim]")
-            if not DEBUG_MODE and log_path:
-                console.print(f"[dim]Log file: {log_path}[/dim]")
-            return
-        
-        prompt_to_continue(ci)
-
-        print_step_header(3, "Adding host to inventory and emails.yml")
-        add_to_ansible_inventory(
-            ansible_config_root=ansible_config_root,
-            full_hostname=full_hostname,
-            email=email,
             log_file=log_file
         )
         prompt_to_continue(ci)
 
-        print_step_header(4, "Running ansible against the new host")
-        run_ansible(
+        print_step_header(3, "Removing host from inventory and emails.yml")
+        remove_from_ansible_inventory(
             ansible_config_root=ansible_config_root,
             full_hostname=full_hostname,
-            bootstrap_ssh_key=bootstrap_ssh_key,
-            ansiblecontrol_ssh_key=ansiblecontrol_ssh_key,
-            vault_password_file=vault_password_file,
             log_file=log_file
         )
-        prompt_to_continue(ci)
-
-        print_step_header(5, "Importing database")
-        import_db(full_hostname, log_file)
+        
         if DEBUG_MODE:
-            console.print(f"[green]All steps completed successfully![/green]")
+            console.print(f"[green]Successfully destroyed {full_hostname}![/green]")
         else:
-            console.print(f"All steps completed successfully!", style="dim")
-            console.print(f"Log file: \n{log_path}", style="dim")
+            console.print(f"Successfully destroyed {full_hostname}!", style="dim")
+            console.print(f"Log file: {log_path}", style="dim")
+        
         # Play a sound (optional, if play is available)
         if shutil.which("play"):
-            for freq in (880, 990, 1100):
+            for freq in (1100, 990, 880):  # Reverse order for destroy
                 run(["play", "-q", "-n", "synth", "0.1", "sin", str(freq)], check=False, log_file=log_file, debug=DEBUG_MODE)
+                
     except Exception as e:
         if DEBUG_MODE:
             console.print(f"[red]ERROR: {e}[/red]")
