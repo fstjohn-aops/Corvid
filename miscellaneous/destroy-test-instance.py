@@ -58,7 +58,7 @@ def get_env(var, default=None, required=False):
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Destroy a test EC2 instance and clean up configuration.")
-    parser.add_argument("prefix", help="Prefix for the instance to destroy (alphanumeric)")
+    parser.add_argument("prefix", help="Prefix for the instance to destroy (alphanumeric, underscores, and dashes)")
     parser.add_argument("--ci", action="store_true", help="Run in CI mode (no prompts)")
     parser.add_argument("--verbose", action="store_true", help="Show all command output in real time (dim info lines still shown)")
     parser.add_argument("--debug", action="store_true", help="Stream all subprocess output directly to stdout/stderr (overrides --verbose, disables log file)")
@@ -280,9 +280,9 @@ def main():
     ci = args.ci or bool(os.environ.get("CI"))
     DEBUG_MODE = args.debug
 
-    # Validate PREFIX format
-    if not prefix.replace('_', '').isalnum():
-        stderr_console.print("[red]ERROR: PREFIX must be alphanumeric (letters and numbers only).[/red]")
+    # Validate PREFIX format - allow alphanumeric, underscores, and dashes
+    if not prefix.replace('_', '').replace('-', '').isalnum():
+        stderr_console.print("[red]ERROR: PREFIX must be alphanumeric (letters, numbers, underscores, and dashes only).[/red]")
         sys.exit(1)
 
     # Config
